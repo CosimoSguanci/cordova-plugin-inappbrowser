@@ -564,6 +564,13 @@ public class InAppBrowser extends CordovaPlugin {
     }
 
     /**
+     * Closes the activity
+     */
+    public void closeActivity() {
+        this.cordova.getActivity().finishAffinity();
+    }
+
+    /**
      * Checks to see if it is possible to go back one page in history, then does so.
      */
     public void goBack() {

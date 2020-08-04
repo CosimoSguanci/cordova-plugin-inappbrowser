@@ -51,6 +51,7 @@ public class InAppBrowserDialog extends Dialog {
                 this.inAppBrowser.goBack();
             }  else {
                 //this.inAppBrowser.closeDialog();
+                this.inAppBrowser.closeActivity();
             }
         }
     }
