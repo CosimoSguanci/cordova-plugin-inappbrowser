@@ -86,6 +86,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import android.webkit.WebBackForwardList;
+import android.webkit.WebHistoryItem;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class InAppBrowser extends CordovaPlugin {
@@ -153,6 +155,7 @@ public class InAppBrowser extends CordovaPlugin {
     private boolean fullscreen = true;
     private String[] allowedSchemes;
     private InAppBrowserClient currentClient;
+    private HashMap<String, String> features;
 
     /**
      * Executes the request and returns PluginResult.
@@ -171,7 +174,7 @@ public class InAppBrowser extends CordovaPlugin {
                 t = SELF;
             }
             final String target = t;
-            final HashMap<String, String> features = parseFeature(args.optString(2));
+            this.features = parseFeature(args.optString(2));
 
             LOG.d(LOG_TAG, "target = " + target);
 
@@ -574,6 +577,19 @@ public class InAppBrowser extends CordovaPlugin {
      * Checks to see if it is possible to go back one page in history, then does so.
      */
     public void goBack() {
+        WebBackForwardList webBackForwardList = inAppWebView.copyBackForwardList();
+        for(int i = 0; i < webBackForwardList.getSize(); i++) {
+            LOG.d("WEB HISTORY", webBackForwardList.getItemAtIndex(i).getUrl());
+        }
+        if(webBackForwardList.getSize() > 0) {
+            String firstUrl = webBackForwardList.getItemAtIndex(0).getUrl();
+            if(firstUrl.startsWith("https://accounts-lugano-app.noku.io/app/?redirect_uri")) {
+                //this.navigate("https://app-server.noku.io/api/auth/login");
+                this.showWebPage("https://app-server.noku.io/api/auth/login", this.features);
+                return;
+            }
+        }
+
         if (this.inAppWebView.canGoBack()) {
             this.inAppWebView.goBack();
         }
@@ -1402,6 +1418,9 @@ public class InAppBrowser extends CordovaPlugin {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
             String newloc = "";
+
+            LOG.e(LOG_TAG, "URL: " + url);
+
             if (url.startsWith("http:") || url.startsWith("https:") || url.startsWith("file:")) {
                 newloc = url;
             }
@@ -1410,7 +1429,9 @@ public class InAppBrowser extends CordovaPlugin {
                 // Assume that everything is HTTP at this point, because if we don't specify,
                 // it really should be.  Complain loudly about this!!!
                 LOG.e(LOG_TAG, "Possible Uncaught/Unknown URI");
-                newloc = "http://" + url;
+                //LOG.e(LOG_TAG, "URL: " + url);
+                //newloc = "http://" + url;
+                newloc = url;
             }
 
             // Update the UI if we haven't already
