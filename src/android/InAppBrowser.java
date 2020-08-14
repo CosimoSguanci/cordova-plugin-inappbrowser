@@ -156,6 +156,8 @@ public class InAppBrowser extends CordovaPlugin {
     private String[] allowedSchemes;
     private InAppBrowserClient currentClient;
     private HashMap<String, String> features;
+    private String LOGIN_URL; // https://accounts-lugano-app.noku.io/app/?
+    private String LOGIN_SERVER_URL;
 
     /**
      * Executes the request and returns PluginResult.
@@ -166,6 +168,7 @@ public class InAppBrowser extends CordovaPlugin {
      * @return A PluginResult object with a status and message.
      */
     public boolean execute(String action, CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
+
         if (action.equals("open")) {
             this.callbackContext = callbackContext;
             final String url = args.getString(0);
@@ -175,7 +178,11 @@ public class InAppBrowser extends CordovaPlugin {
             }
             final String target = t;
             this.features = parseFeature(args.optString(2));
+            this.LOGIN_URL = args.optString(3);
+            this.LOGIN_SERVER_URL = args.optString(4);
 
+            LOG.d(LOG_TAG, "LOGIN_URL = " + LOGIN_URL);
+            LOG.d(LOG_TAG, "LOGIN_SERVER_URL = " + LOGIN_SERVER_URL);
             LOG.d(LOG_TAG, "target = " + target);
 
             this.cordova.getActivity().runOnUiThread(new Runnable() {
@@ -578,14 +585,16 @@ public class InAppBrowser extends CordovaPlugin {
      */
     public void goBack() {
         WebBackForwardList webBackForwardList = inAppWebView.copyBackForwardList();
-        for(int i = 0; i < webBackForwardList.getSize(); i++) {
+
+        /*for(int i = 0; i < webBackForwardList.getSize(); i++) {
             LOG.d("WEB HISTORY", webBackForwardList.getItemAtIndex(i).getUrl());
-        }
+        }*/
+
         if(webBackForwardList.getSize() > 0) {
             String firstUrl = webBackForwardList.getItemAtIndex(0).getUrl();
-            if(firstUrl.startsWith("https://accounts-lugano-app.noku.io/app/?redirect_uri")) {
-                //this.navigate("https://app-server.noku.io/api/auth/login");
-                this.showWebPage("https://app-server.noku.io/api/auth/login", this.features);
+            
+            if(LOGIN_URL != null && LOGIN_SERVER_URL != null && firstUrl.startsWith(LOGIN_URL)) { // https://accounts-lugano-app.noku.io/app/?redirect_uri
+                this.showWebPage(LOGIN_SERVER_URL, this.features); // https://app-server.noku.io/api/auth/login
                 return;
             }
         }
